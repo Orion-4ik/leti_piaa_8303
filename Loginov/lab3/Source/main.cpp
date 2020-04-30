@@ -4,8 +4,8 @@
 #include <limits.h>
 #include <stack>
 using namespace std;
-#define SHOW_DEBUG
 
+#define SHOW_DEBUG
 
 struct edge
 {
@@ -16,8 +16,9 @@ struct edge
     int forward; // поток в найденом пути
     int back; // поток в противоположном пути
     bool bidirectional; // двунаправленное ребро
-
 };
+
+
 
 bool compare(edge a, edge b)
 {
@@ -25,10 +26,10 @@ bool compare(edge a, edge b)
         return a.second < b.second;
     return a.first < b.first;
 }
+
 class Graph
 {
 private:
-
     char start; // исток
     char finish; // сток
     int N; // количество ребер
@@ -76,57 +77,108 @@ public:
 
     bool Search()
     {
+#ifdef SHOW_DEBUG
+        cout << "Another search" << endl << endl;
+#endif
         stack<char> s;
         s.push(start);
+#ifdef SHOW_DEBUG
+        print_stack(s);
+#endif
 
         while(!s.empty())
         {
             char elem = s.top();
             checkedpoint.push_back(elem); // добавляем в вектор просмотренных вершин
             s.pop();
-
+#ifdef SHOW_DEBUG
+            cout << endl <<"pop from stack last node: " << elem << endl;
+            cout << "search next node from " << elem << ":"<< endl;
+#endif
             bool found = false;
             for (int i = 0; i < edges.size(); i++)
             {
                 if (elem == edges.at(i).first) // прямой ход по ребру
                 {
-                    if (isChecked(edges.at(i).second) || edges.at(i).forward == 0)
+#ifdef SHOW_DEBUG
+                    cout << "\t"<< elem << " --> "<< edges.at(i).second << "\t";
+#endif
+                    if (isChecked(edges.at(i).second) || edges.at(i).forward == 0) {
+#ifdef SHOW_DEBUG
+                        if (isChecked(edges.at(i).second))
+                            cout << "skip (isChecked)" << endl;
+                        else
+                            cout << "skip (forward == 0)" << endl;
+#endif
                         continue; // если далее путь просмотрен или пропускная способность равна 0, то не рассмотриваем
+                    }
 
                     if(edges.at(i).second == finish)
                     {
+#ifdef SHOW_DEBUG
+                        cout << "finish" << endl;
+#endif
                         solutions.push_back(elem);
                         solutions.push_back(finish);
                         return true;
                     }
 
                     found = true;
+#ifdef SHOW_DEBUG
+                    cout << "ok" << "\t" << "append to stack" << endl;
+#endif
                     s.push(edges.at(i).second);
+#ifdef SHOW_DEBUG
+                    print_stack(s);
+#endif
                 }
 
                 if (elem == edges.at(i).second) // обратный ход по ребру
                 {
-                    if (isChecked(edges.at(i).first) || edges.at(i).back == 0)
+#ifdef SHOW_DEBUG
+                    cout << "\t"<< elem << " --> "<< edges.at(i).first << "\t";
+#endif
+                    if (isChecked(edges.at(i).first) || edges.at(i).back == 0) {
+#ifdef SHOW_DEBUG
+                        if (isChecked(edges.at(i).first))
+                            cout << "skip (isChecked)" << endl;
+                        else
+                            cout << "skip (back == 0)" << endl;
+#endif
+
                         continue; // если далее путь просмотрен или пропускная способность равна 0, то не рассмотриваем
+                    }
 
                     if(edges.at(i).first == finish)
                     {
+#ifdef SHOW_DEBUG
+                        cout << "finish" << endl;
+#endif
                         solutions.push_back(elem);
                         solutions.push_back(finish);
                         return true;
                     }
 
                     found = true;
+#ifdef SHOW_DEBUG
+                    cout << "ok" << "\t" << "append to stack" << endl;
+#endif
                     s.push(edges.at(i).first);
+#ifdef SHOW_DEBUG
+                    print_stack(s);
+#endif
                 }
             }
 
             if(found) {
                 solutions.push_back(elem);
             }
-            else
+            else {
                 solutions.pop_back();
-
+            }
+#ifdef SHOW_DEBUG
+            print_solution(solutions);
+#endif
         }
         return false;
     }
@@ -176,6 +228,32 @@ public:
         }
     }
 
+    void print_stack(stack<char> s) {
+        cout << "stack: ";
+
+        stack<char> r;
+        while(!s.empty()) {
+            r.push(s.top());
+            s.pop();
+        }
+
+        while(!r.empty()) {
+            cout << r.top();
+            r.pop();
+        }
+
+        cout << endl;
+    }
+
+    void print_solution(vector<char> v)
+    {
+        cout << "path: ";
+        for(const auto& e : v) {
+            cout << e << " ";
+        }
+        cout << endl;
+    }
+
     int FordFulkerson()
     {
         int maxFlow = 0; // максимальный поток
@@ -207,7 +285,7 @@ public:
             }
 #endif
 
-            int min = calc_min();	// минимальная пропускная способность
+            int min = calc_min();   // минимальная пропускная способность
 
 #ifdef SHOW_DEBUG
             cout << "Current min: " << min << endl;
@@ -220,7 +298,7 @@ public:
                     if (edges.at(j).first == solutions.at(i - 1) && edges.at(j).second == solutions.at(i))
                     {
 #ifdef SHOW_DEBUG
-                        cout << "straight:" << edges.at(j).first << edges.at(j).second <<"(";
+                        cout << "forward:" << edges.at(j).first << edges.at(j).second <<"(";
                         cout << edges.at(j).forward << "-" << min<<")" << "=" << edges.at(j).forward-min << endl;
 #endif
                         edges.at(j).forward -= min;
@@ -233,7 +311,7 @@ public:
                     if (edges.at(j).second == solutions.at(i - 1) && edges.at(j).first == solutions.at(i))
                     {
 #ifdef SHOW_DEBUG
-                        cout << "straight:" << edges.at(j).first << edges.at(j).second <<"(";
+                        cout << "forward:" << edges.at(j).first << edges.at(j).second <<"(";
                         cout << edges.at(j).forward << "+" << min << "=" << edges.at(j).forward+min << endl;
 #endif
                         edges.at(j).forward += min;
@@ -267,3 +345,4 @@ int main()
 
     return 0;
 }
+
